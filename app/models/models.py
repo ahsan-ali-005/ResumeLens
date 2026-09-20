@@ -26,7 +26,7 @@ class Review(SQLModel, table=True):
 
     resume_id : uuid.UUID = Field(primary_key=True, foreign_key="resume.id")
     review_score : float = Field(le=10, gt=0)
-    strenghts : str
+    strengths : str
     weaknessess : str
     missing_skills : str
     suggestions : str
