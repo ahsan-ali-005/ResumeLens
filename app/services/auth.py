@@ -38,6 +38,6 @@ async def login_user_service(email: str, password: str, session: AsyncSession):
 
     if user and verify_password(plain_password=password, hashed_password=user.password_hash):
         token = create_token({"sub":email})
-        return {"message": "Login Success!", "token": token}
+        return {"message": "Login Success" ,"access_token": token, "token_type": "bearer"}
 
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Wrong Email or password!")
