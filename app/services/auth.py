@@ -1,9 +1,10 @@
+from pydantic import EmailStr
 from sqlmodel import select
 from fastapi import HTTPException, status
 from app.core.database import SessionDP
-from app.core.security import hash_password
+from app.core.security import create_token, hash_password, verify_password
 from app.models.models import User
-
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 
 
@@ -15,8 +16,7 @@ async def register_user_service(data,session):
 
     if existing_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User Already Exists!")
-
-
+    
     hashed_password = hash_password(data.password)
 
     user = User(
@@ -24,7 +24,6 @@ async def register_user_service(data,session):
         email=data.email,
         password_hash=hashed_password
     )
-
     session.add(user)
     await session.commit()
     await session.refresh(user)
@@ -32,5 +31,13 @@ async def register_user_service(data,session):
     return {"message" : "Registration Successfull!"}
 
 
-async def login_user():
-    pass
+async def login_user_service(email: str, password: str, session: AsyncSession):
+
+    query = await session.exec(select(User).where(User.email == email))
+    user = query.first()
+
+    if user and verify_password(plain_password=password, hashed_password=user.password_hash):
+        token = create_token({"sub":email})
+        return {"message": "Login Success!", "token": token}
+
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Wrong Email or password!")
