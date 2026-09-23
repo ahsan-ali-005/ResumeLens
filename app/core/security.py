@@ -47,7 +47,7 @@ def verify_token(token: str) -> dict:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
 
-def is_token_blacklisted(token: str):
+def is_token_blacklisted(token: str) -> bool:
     return redis_client.exists(token) > 0
 
 
