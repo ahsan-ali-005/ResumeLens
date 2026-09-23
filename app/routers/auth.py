@@ -1,17 +1,17 @@
 from fastapi import Depends, FastAPI, APIRouter
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from app.core.database import SessionDP
 from app.core.security import hash_password
 from app.models.models import User
 from app.schemas.schemas import CreateUser
 from sqlmodel import select
-from app.services.auth import login_user_service, register_user_service
+from app.services.auth import login_user_service, logout_user_service, register_user_service
 
 
 
 
 router = APIRouter(prefix="/auth" , tags=["Authentication"])
-
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 @router.post("/register")
@@ -25,4 +25,9 @@ async def login_user(session: SessionDP , user_data: OAuth2PasswordRequestForm =
 
     result = await login_user_service(email=user_data.username, password=user_data.password, session=session)
     return result
-    
+
+@router.post("/logout")
+async def logout_user(token : str = Depends(oauth2_scheme)):
+
+    result = await logout_user_service(token)
+    return result

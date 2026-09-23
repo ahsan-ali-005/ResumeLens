@@ -2,10 +2,9 @@ from pydantic import EmailStr
 from sqlmodel import select
 from fastapi import HTTPException, status
 from app.core.database import SessionDP
-from app.core.security import create_token, hash_password, verify_password
+from app.core.security import blacklist_token, create_token, hash_password, verify_password, verify_token
 from app.models.models import User
 from sqlmodel.ext.asyncio.session import AsyncSession
-
 
 
 
@@ -41,3 +40,11 @@ async def login_user_service(email: str, password: str, session: AsyncSession):
         return {"message": "Login Success" ,"access_token": token, "token_type": "bearer"}
 
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Wrong Email or password!")
+
+
+async def logout_user_service(token):
+
+    payload = verify_token(token)
+    exp = payload.get("exp")
+    blacklist_token(token,exp)
+    return {"message" : "User Logout!"}

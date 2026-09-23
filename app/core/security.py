@@ -1,6 +1,9 @@
 import bcrypt, jwt
+from fastapi import HTTPException, status
 from datetime import datetime, timezone, timedelta
 from app.core.config import settings
+from app.core.redis import redis_client
+from datetime import datetime, timezone
 
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
@@ -28,3 +31,29 @@ def create_token(payload: dict):
     token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return token
 
+
+def verify_token(token: str) -> dict:
+    if is_token_blacklisted(token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Token has been blacklisted/revoked."
+        )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+
+def is_token_blacklisted(token: str):
+    return redis_client.exists(token) > 0
+
+
+def blacklist_token(token,exp):
+
+    current_time = datetime.now(timezone.utc).timestamp()
+    ttl = int(exp - current_time)
+    if ttl > 0:
+        redis_client.set(token , "blacklisted", ex=ttl)
