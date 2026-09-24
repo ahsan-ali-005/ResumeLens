@@ -4,9 +4,13 @@ from datetime import datetime, timezone, timedelta
 from app.core.config import settings
 from app.core.redis import redis_client
 from datetime import datetime, timezone
+from itsdangerous import URLSafeTimedSerializer
+
 
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
+
+serializer = URLSafeTimedSerializer(secret_key=SECRET_KEY)
 
 def hash_password(password: str):
 
@@ -57,3 +61,17 @@ def blacklist_token(token,exp):
     ttl = int(exp - current_time)
     if ttl > 0:
         redis_client.set(token , "blacklisted", ex=ttl)
+
+
+def create_verification_token(email: str):
+
+    token = serializer.dumps(email, salt="email-verification")
+    return token
+
+def verify_verification_token(token: str , max_age : int = 86400):
+    try:
+        email = serializer.loads(token, max_age=max_age)
+        return email
+
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")

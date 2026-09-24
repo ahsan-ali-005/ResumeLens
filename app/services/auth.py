@@ -2,9 +2,11 @@ from pydantic import EmailStr
 from sqlmodel import select
 from fastapi import HTTPException, status
 from app.core.database import SessionDP
-from app.core.security import blacklist_token, create_token, hash_password, verify_password, verify_token
+from app.core.security import blacklist_token, create_token, create_verification_token, hash_password, verify_password, verify_token, verify_verification_token
 from app.models.models import User
 from sqlmodel.ext.asyncio.session import AsyncSession
+
+from app.services.email import send_confirmation_email_service
 
 
 
@@ -27,7 +29,11 @@ async def register_user_service(data,session):
     await session.commit()
     await session.refresh(user)
 
-    return {"message" : "Registration Successfull!"}
+    token = create_verification_token(data.email)
+    await send_confirmation_email_service(name=data.name, email=data.email, token=token)
+
+    return {"message" : "Registration Successfull! Please Verify your Email!"}
+    
 
 
 async def login_user_service(email: str, password: str, session: AsyncSession):
@@ -48,3 +54,22 @@ async def logout_user_service(token):
     exp = payload.get("exp")
     blacklist_token(token,exp)
     return {"message" : "User Logout!"}
+
+async def verify_email_service(token: str, session: AsyncSession):
+    email = verify_verification_token(token=token)
+
+    query = select(User).where(User.email == email)
+    result = await session.exec(query)
+    user = result.first()
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not Registered.")
+
+    if user.is_verified:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email is already verified!")
+
+    user.is_verified = True
+
+    await session.commit()
+
+    return {"message" : "Email Verified Successfully!"} 

@@ -1,11 +1,10 @@
 from fastapi import Depends, FastAPI, APIRouter
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from app.core.database import SessionDP
-from app.core.security import hash_password
 from app.models.models import User
 from app.schemas.schemas import CreateUser
 from sqlmodel import select
-from app.services.auth import login_user_service, logout_user_service, register_user_service
+from app.services.auth import login_user_service, logout_user_service, register_user_service, verify_email_service
 
 
 
@@ -30,4 +29,10 @@ async def login_user(session: SessionDP , user_data: OAuth2PasswordRequestForm =
 async def logout_user(token : str = Depends(oauth2_scheme)):
 
     result = await logout_user_service(token)
+    return result
+
+@router.post("/verify-email?token={token}")
+async def verify_email(token : str, session: SessionDP):
+
+    result = await verify_email_service(token=token, session=session)
     return result

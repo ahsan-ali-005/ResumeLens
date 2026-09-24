@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     MAIL_STARTTLS: bool
     MAIL_SSL_TLS: bool
     USE_CREDENTIALS: bool
+    DOMAIN_URL : str
     class Config:
         env_file = ".env"
 

@@ -1,5 +1,7 @@
 from fastapi_mail import FastMail, ConnectionConfig, MessageSchema, MessageType
+from fastapi.templating import Jinja2Templates
 from app.core.config import settings
+from pathlib import Path
 
 MAIL_USERNAME = settings.MAIL_USERNAME
 MAIL_PASSWORD = settings.MAIL_PASSWORD
@@ -10,6 +12,7 @@ MAIL_STARTTLS=settings.MAIL_STARTTLS
 MAIL_SSL_TLS = settings.MAIL_SSL_TLS
 USE_CREDENTIALS=settings.USE_CREDENTIALS
 
+DOMAIN_URL = settings.DOMAIN_URL
 
 fastmail = FastMail(ConnectionConfig(
     MAIL_USERNAME=MAIL_USERNAME,
@@ -22,19 +25,24 @@ fastmail = FastMail(ConnectionConfig(
     USE_CREDENTIALS=USE_CREDENTIALS
 ))
 
+templates_dir = Jinja2Templates(directory="app/templates/emails")
+
+template = templates_dir.get_template("email_confirmation.html")
 
 
 
-async def send_confirmation_email_service():
+async def send_confirmation_email_service(name: str, email: str, token: str):
 
+    confirmation_url = f"{DOMAIN_URL}auth/verify-email?token={token}"
+    html_content = template.render(name=name, confirmation_url=confirmation_url)
     await fastmail.send_message(message=MessageSchema(
 
-        recipients=['mr.ahsanali005@gmail.com'],
-        subject="Hey! how are you?",
-        body="I am reaching out because i want to.......",
-        subtype=MessageType.plain
+        recipients=[email],
+        subject="Confirm your Email!",
+        body=html_content,
+        subtype=MessageType.html
     )
 
     )
 
-    return {"message" : "Email Sent!"}
+    return True
