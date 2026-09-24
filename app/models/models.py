@@ -11,6 +11,7 @@ class User(SQLModel, table=True):
     name : str
     email : EmailStr = Field(unique=True)
     password_hash : str
+    is_verified : bool = Field(default=False)
 
     resumes : List["Resume"] = Relationship(back_populates="user")
 
