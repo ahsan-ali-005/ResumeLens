@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Your Email</title>
+</head>
+
+<body>
+
+    <h2>Welcome to ResumeLens!</h2>
+
+    <p>Hi {{ name }},</p>
+
+    <p>
+        Thanks for creating an account with ResumeLens.
+        Please confirm your email address by clicking the button below.
+    </p>
+
+    <p>
+        <a href="{{ confirmation_url }}">
+            Confirm Email
+        </a>
+    </p>
+
+    <p>
+        If you didn't create this account, you can safely ignore this email.
+    </p>
+
+    <p>
+        Thanks,<br>
+        ResumeLens Team
+    </p>
+
+</body>
+</html>
