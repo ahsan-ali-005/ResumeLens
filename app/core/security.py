@@ -70,7 +70,7 @@ def create_verification_token(email: str):
 
 def verify_verification_token(token: str , max_age : int = 86400):
     try:
-        email = serializer.loads(token, max_age=max_age)
+        email = serializer.loads(token, max_age=max_age, salt="email-verification")
         return email
 
     except Exception:

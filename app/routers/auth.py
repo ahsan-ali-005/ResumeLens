@@ -31,7 +31,7 @@ async def logout_user(token : str = Depends(oauth2_scheme)):
     result = await logout_user_service(token)
     return result
 
-@router.post("/verify-email?token={token}")
+@router.get("/verify-email")
 async def verify_email(token : str, session: SessionDP):
 
     result = await verify_email_service(token=token, session=session)
