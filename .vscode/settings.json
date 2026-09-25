@@ -1,5 +1,0 @@
-{
-    "chat.agent.enabled": false,
-    "workbench.editor.markdownDefaultEditorInAgentsWindow": false,
-    "chat.disableAIFeatures": true
-}
