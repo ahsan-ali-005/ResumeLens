@@ -37,8 +37,8 @@ async def verify_email(token : str, session: SessionDP):
 
 
 @router.post("/forgot-password")
-async def forgot_password(email: ForgotPasswordRequest, session: SessionDP):
-    result = await forgot_password_service(email, session)
+async def forgot_password(data: ForgotPasswordRequest, session: SessionDP):
+    result = await forgot_password_service(data.email, session)
     return result
 
 

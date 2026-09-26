@@ -82,9 +82,10 @@ async def forgot_password_service(email: EmailStr, session: AsyncSession):
     user = result.first()
 
     if user:
-        token = create_token(email)
+        token = create_verification_token(email)
         await send_password_reset_email_service(name=user.name, email=email, token=token)
         return {"message" : "If you are registered you got the password reset email. Check your Inbox!"}
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found with this email.")
 
 
 async def password_reset_service(data: ResetPasswordRequest, session: AsyncSession):
@@ -105,7 +106,7 @@ async def password_reset_service(data: ResetPasswordRequest, session: AsyncSessi
             detail="User not found."
         )
 
-    user.hashed_password = hash_password(data.new_password)
+    user.password_hash = hash_password(data.new_password)
     session.add(user)
     await session.commit()
     await session.refresh(user)
