@@ -6,7 +6,8 @@ from app.core.security import blacklist_token, create_token, create_verification
 from app.models.models import User
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.services.email import send_confirmation_email_service
+from app.schemas.schemas import ResetPasswordRequest
+from app.services.email import send_confirmation_email_service, send_password_reset_email_service
 
 
 
@@ -55,9 +56,10 @@ async def logout_user_service(token):
     blacklist_token(token,exp)
     return {"message" : "User Logout!"}
 
-async def verify_email_service(token: str, session: AsyncSession):
-    email = verify_verification_token(token=token)
 
+async def verify_email_service(token: str, session: AsyncSession):
+
+    email = verify_verification_token(token=token)
     query = select(User).where(User.email == email)
     result = await session.exec(query)
     user = result.first()
@@ -69,7 +71,43 @@ async def verify_email_service(token: str, session: AsyncSession):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email is already verified!")
 
     user.is_verified = True
-
     await session.commit()
+    return {"message" : "Email Verified Successfully!"}
 
-    return {"message" : "Email Verified Successfully!"} 
+
+async def forgot_password_service(email: EmailStr, session: AsyncSession):
+
+    query = select(User).where(User.email == email)
+    result = await session.exec(query)
+    user = result.first()
+
+    if user:
+        token = create_token(email)
+        await send_password_reset_email_service(name=user.name, email=email, token=token)
+        return {"message" : "If you are registered you got the password reset email. Check your Inbox!"}
+
+
+async def password_reset_service(data: ResetPasswordRequest, session: AsyncSession):
+    email = verify_verification_token(token=data.token)
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Invalid or expired token."
+        )
+
+    query = select(User).where(User.email == email)
+    result = await session.exec(query)
+    user = result.first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="User not found."
+        )
+
+    user.hashed_password = hash_password(data.new_password)
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+
+    return {"message": "Password has been reset successfully."}

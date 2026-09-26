@@ -27,13 +27,13 @@ fastmail = FastMail(ConnectionConfig(
 
 templates_dir = Jinja2Templates(directory="app/templates/emails")
 
-template = templates_dir.get_template("email_confirmation.html")
 
 
 
 async def send_confirmation_email_service(name: str, email: str, token: str):
 
     confirmation_url = f"{DOMAIN_URL}auth/verify-email?token={token}"
+    template = templates_dir.get_template("email_confirmation.html")
     html_content = template.render(name=name, confirmation_url=confirmation_url)
     await fastmail.send_message(message=MessageSchema(
 
@@ -43,6 +43,26 @@ async def send_confirmation_email_service(name: str, email: str, token: str):
         subtype=MessageType.html
     )
 
+    )
+
+    return True
+
+
+async def send_password_reset_email_service(name: str, email: str, token: str):
+
+    reset_url = f"{DOMAIN_URL}auth/reset_password?token={token}"
+    template = templates_dir.get_template("password_reset.html")
+    html_content = template.render(name=name, reset_url=reset_url)
+
+    await fastmail.send_message(message=MessageSchema(
+
+        subject="Reset Your Password!",
+        recipients=[email],
+        body=html_content,
+        subtype=MessageType.html
+
+    )
+    
     )
 
     return True
