@@ -7,7 +7,7 @@ from app.models.models import User
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.schemas.schemas import ResetPasswordRequest
-from app.services.email import send_confirmation_email_service, send_password_reset_email_service
+from app.tasks.email_tasks import send_confirmation_email_task, send_password_reset_email_task
 
 
 
@@ -31,8 +31,7 @@ async def register_user_service(data,session):
     await session.refresh(user)
 
     token = create_verification_token(data.email)
-    await send_confirmation_email_service(name=data.name, email=data.email, token=token)
-
+    send_confirmation_email_task.delay(name=data.name, email=data.email, token=token)
     return {"message" : "Registration Successfull! Please Verify your Email!"}
     
 
@@ -83,7 +82,7 @@ async def forgot_password_service(email: EmailStr, session: AsyncSession):
 
     if user:
         token = create_verification_token(email)
-        await send_password_reset_email_service(name=user.name, email=email, token=token)
+        send_password_reset_email_task.delay(name=user.name, email=email, token=token)
         return {"message" : "If you are registered you got the password reset email. Check your Inbox!"}
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found with this email.")
 

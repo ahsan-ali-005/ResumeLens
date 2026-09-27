@@ -9,5 +9,6 @@ CELERY_BROKER = settings.CELERY_BROKER
 celery_app = Celery(
     "ResumeLens",
     backend=CELERY_BACKEND,
-    broker=CELERY_BROKER
+    broker=CELERY_BROKER,
+    include=["app.tasks.email_tasks"]
 )
