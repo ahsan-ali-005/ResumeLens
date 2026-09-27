@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     MAIL_SSL_TLS: bool
     USE_CREDENTIALS: bool
     DOMAIN_URL : str
+    CELERY_BACKEND : str
+    CELERY_BROKER : str
     class Config:
         env_file = ".env"
 
