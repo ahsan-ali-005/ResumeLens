@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     DOMAIN_URL : str
     CELERY_BACKEND : str
     CELERY_BROKER : str
+    ALLOWED_ORIGINS : str
     class Config:
         env_file = ".env"
 
