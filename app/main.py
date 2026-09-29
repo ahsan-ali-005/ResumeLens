@@ -4,6 +4,7 @@ from app.core.database import create_db_tables
 from app.core.middlewares import RequestTimeMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.auth import router as auth_router
+from app.core.config import settings
 
 @asynccontextmanager
 async def lifespan_handler(app : FastAPI):
@@ -16,7 +17,7 @@ app.include_router(auth_router)
 app.add_middleware(RequestTimeMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
