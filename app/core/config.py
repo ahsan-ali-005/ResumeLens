@@ -1,3 +1,4 @@
+from typing import List
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
@@ -17,7 +18,7 @@ class Settings(BaseSettings):
     DOMAIN_URL : str
     CELERY_BACKEND : str
     CELERY_BROKER : str
-    ALLOWED_ORIGINS : str
+    ALLOWED_ORIGINS : List[str]
     class Config:
         env_file = ".env"
 
