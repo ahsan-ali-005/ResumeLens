@@ -35,7 +35,7 @@ class Review(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     review_score : float = Field(le=10, gt=0)
     strengths : str
-    weaknessess : str
+    weaknesses : str
     missing_skills : str
     suggestions : str
 

@@ -17,8 +17,3 @@ async def get_session():
         yield session
 
 SessionDP = Annotated[AsyncSession, Depends(get_session)]
-
-
-async def create_db_tables():
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)

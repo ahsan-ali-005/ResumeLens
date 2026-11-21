@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from app.core.database import create_db_tables
 from app.core.middlewares import RequestTimeMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.auth import router as auth_router
@@ -8,7 +7,6 @@ from app.core.config import settings
 
 @asynccontextmanager
 async def lifespan_handler(app : FastAPI):
-    await create_db_tables()
     yield
 
 
