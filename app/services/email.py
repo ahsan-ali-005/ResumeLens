@@ -1,7 +1,6 @@
 from fastapi_mail import FastMail, ConnectionConfig, MessageSchema, MessageType
 from fastapi.templating import Jinja2Templates
 from app.core.config import settings
-from pathlib import Path
 
 MAIL_USERNAME = settings.MAIL_USERNAME
 MAIL_PASSWORD = settings.MAIL_PASSWORD
