@@ -1,17 +1,16 @@
 from pydantic import EmailStr
 from sqlmodel import select
 from fastapi import HTTPException, status
-from app.core.database import SessionDP
-from app.core.security import blacklist_token, create_token, create_verification_token, hash_password, verify_password, verify_token, verify_verification_token
+from app.core.security import blacklist_token, create_token, create_signed_token, hash_password, verify_password, verify_token, verify_signed_token
 from app.models.models import User
 from sqlmodel.ext.asyncio.session import AsyncSession
-
 from app.schemas.schemas import ResetPasswordRequest
 from app.tasks.email_tasks import send_confirmation_email_task, send_password_reset_email_task
 
+VERIFY_EMAIL_SALT = "email-verification"
+PASSWORD_RESET_SALT = "password-reset"
 
-
-async def register_user_service(data,session):
+async def register_user_service(data,session: AsyncSession):
     query = select(User).where(User.email == data.email)
     result = await session.exec(query)
     existing_user = result.first()
@@ -30,7 +29,7 @@ async def register_user_service(data,session):
     await session.commit()
     await session.refresh(user)
 
-    token = create_verification_token(data.email)
+    token = create_signed_token(email=data.email, salt=VERIFY_EMAIL_SALT)
     send_confirmation_email_task.delay(name=data.name, email=data.email, token=token)
     return {"message" : "Registration Successfull! Please Verify your Email!"}
     
@@ -53,15 +52,15 @@ async def login_user_service(email: str, password: str, session: AsyncSession):
 
 async def logout_user_service(token):
 
-    payload = verify_token(token)
+    payload = await verify_token(token)
     exp = payload.get("exp")
-    blacklist_token(token,exp)
+    await blacklist_token(token,exp)
     return {"message" : "User Logout!"}
 
 
 async def verify_email_service(token: str, session: AsyncSession):
 
-    email = verify_verification_token(token=token)
+    email = verify_signed_token(token=token, salt=VERIFY_EMAIL_SALT)
     query = select(User).where(User.email == email)
     result = await session.exec(query)
     user = result.first()
@@ -84,20 +83,15 @@ async def forgot_password_service(email: EmailStr, session: AsyncSession):
     user = result.first()
 
     if user:
-        token = create_verification_token(email)
+        token = create_signed_token(email=email, salt=PASSWORD_RESET_SALT)
         send_password_reset_email_task.delay(name=user.name, email=email, token=token)
-        return {"message" : "If you are registered you got the password reset email. Check your Inbox!"}
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found with this email.")
+        
+    return {"message": "If an account exists for this email, a password reset link has been sent."}
 
 
 async def password_reset_service(data: ResetPasswordRequest, session: AsyncSession):
-    email = verify_verification_token(token=data.token)
-    if not email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="Invalid or expired token."
-        )
 
+    email = verify_signed_token(token=data.token, salt=PASSWORD_RESET_SALT, max_age=3600)
     query = select(User).where(User.email == email)
     result = await session.exec(query)
     user = result.first()

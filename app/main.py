@@ -4,10 +4,12 @@ from app.core.middlewares import RequestTimeMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.auth import router as auth_router
 from app.core.config import settings
+from app.core.redis import redis_client
 
 @asynccontextmanager
 async def lifespan_handler(app : FastAPI):
     yield
+    await redis_client.aclose()
 
 
 app = FastAPI(lifespan=lifespan_handler)

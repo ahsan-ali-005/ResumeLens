@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     CELERY_BACKEND : str
     CELERY_BROKER : str
     ALLOWED_ORIGINS : List[str]
+    FRONTEND_URL : str
     class Config:
         env_file = ".env"
 
