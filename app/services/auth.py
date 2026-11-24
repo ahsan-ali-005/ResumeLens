@@ -42,6 +42,9 @@ async def login_user_service(email: str, password: str, session: AsyncSession):
     user = query.first()
 
     if user and verify_password(plain_password=password, hashed_password=user.password_hash):
+        if not user.is_verified:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Please Verify Your email first!")
+            
         token = create_token({"sub":email})
         return {"message": "Login Success" ,"access_token": token, "token_type": "bearer"}
 
