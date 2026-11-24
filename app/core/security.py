@@ -1,4 +1,4 @@
-import bcrypt, jwt
+import bcrypt, jwt, hashlib
 from fastapi import HTTPException, status
 from datetime import datetime, timezone, timedelta
 from app.core.config import settings
@@ -75,3 +75,9 @@ def verify_signed_token(token: str , salt : str, max_age : int = 86400):
 
     except Exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
+
+
+async def consume_token_once(token: str, ttl: int) -> bool:
+    
+    key = f"used_token:{hashlib.sha256(token.encode()).hexdigest()}"
+    return bool(await redis_client.set(key, "used", nx=True, ex=ttl))

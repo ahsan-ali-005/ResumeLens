@@ -1,14 +1,16 @@
 from pydantic import EmailStr
 from sqlmodel import select
 from fastapi import HTTPException, status
-from app.core.security import blacklist_token, create_token, create_signed_token, hash_password, verify_password, verify_token, verify_signed_token
+from app.core.security import blacklist_token, create_token, create_signed_token, hash_password, verify_password, verify_token, verify_signed_token, consume_token_once
 from app.models.models import User
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.schemas.schemas import ResetPasswordRequest
 from app.tasks.email_tasks import send_confirmation_email_task, send_password_reset_email_task
 
+
 VERIFY_EMAIL_SALT = "email-verification"
 PASSWORD_RESET_SALT = "password-reset"
+RESET_TOKEN_MAX_AGE = 3600
 
 async def register_user_service(data,session: AsyncSession):
     query = select(User).where(User.email == data.email)
@@ -91,7 +93,14 @@ async def forgot_password_service(email: EmailStr, session: AsyncSession):
 
 async def password_reset_service(data: ResetPasswordRequest, session: AsyncSession):
 
-    email = verify_signed_token(token=data.token, salt=PASSWORD_RESET_SALT, max_age=3600)
+    email = verify_signed_token(token=data.token, salt=PASSWORD_RESET_SALT, max_age=RESET_TOKEN_MAX_AGE)
+
+    if not await consume_token_once(data.token, ttl=RESET_TOKEN_MAX_AGE):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This reset link has already been used."
+        )
+
     query = select(User).where(User.email == email)
     result = await session.exec(query)
     user = result.first()
