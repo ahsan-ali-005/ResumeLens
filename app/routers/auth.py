@@ -1,15 +1,13 @@
 from fastapi import Depends, FastAPI, APIRouter
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordRequestForm
 from app.core.database import SessionDP
-from app.models.models import User
 from app.schemas.schemas import CreateUser, ForgotPasswordRequest, ResetPasswordRequest
-from sqlmodel import select
+from app.core.dependencies import oauth2_scheme
 from app.services.auth import forgot_password_service, login_user_service, logout_user_service, register_user_service, verify_email_service, password_reset_service
 
 
 
 router = APIRouter(prefix="/auth" , tags=["Authentication"])
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 @router.post("/register")

@@ -3,6 +3,7 @@ from sqlmodel import select
 from fastapi import HTTPException, status
 from app.core.security import blacklist_token, create_token, create_signed_token, hash_password, verify_password, verify_token, verify_signed_token, consume_token_once
 from app.models.models import User
+from app.services.user import get_user_by_email
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.schemas.schemas import ResetPasswordRequest
 from app.tasks.email_tasks import send_confirmation_email_task, send_password_reset_email_task
@@ -13,11 +14,9 @@ PASSWORD_RESET_SALT = "password-reset"
 RESET_TOKEN_MAX_AGE = 3600
 
 async def register_user_service(data,session: AsyncSession):
-    query = select(User).where(User.email == data.email)
-    result = await session.exec(query)
-    existing_user = result.first()
 
-    if existing_user:
+    user = await get_user_by_email(email=data.email, session=session)
+    if user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User Already Exists!")
     
     hashed_password = hash_password(data.password)
@@ -39,8 +38,7 @@ async def register_user_service(data,session: AsyncSession):
 
 async def login_user_service(email: str, password: str, session: AsyncSession):
 
-    query = await session.exec(select(User).where(User.email == email))
-    user = query.first()
+    user = await get_user_by_email(email=email, session=session)
 
     if user and verify_password(plain_password=password, hashed_password=user.password_hash):
         if not user.is_verified:
@@ -63,9 +61,7 @@ async def logout_user_service(token):
 async def verify_email_service(token: str, session: AsyncSession):
 
     email = verify_signed_token(token=token, salt=VERIFY_EMAIL_SALT)
-    query = select(User).where(User.email == email)
-    result = await session.exec(query)
-    user = result.first()
+    user = await get_user_by_email(email=email, session=session)
 
     if not user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not Registered.")
@@ -80,9 +76,7 @@ async def verify_email_service(token: str, session: AsyncSession):
 
 async def forgot_password_service(email: EmailStr, session: AsyncSession):
 
-    query = select(User).where(User.email == email)
-    result = await session.exec(query)
-    user = result.first()
+    user = await get_user_by_email(email=email, session=session)
 
     if user:
         token = create_signed_token(email=email, salt=PASSWORD_RESET_SALT)
@@ -101,9 +95,7 @@ async def password_reset_service(data: ResetPasswordRequest, session: AsyncSessi
             detail="This reset link has already been used."
         )
 
-    query = select(User).where(User.email == email)
-    result = await session.exec(query)
-    user = result.first()
+    user = await get_user_by_email(email=email, session=session)
 
     if not user:
         raise HTTPException(
