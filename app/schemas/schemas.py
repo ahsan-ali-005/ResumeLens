@@ -1,3 +1,5 @@
+from uuid import UUID
+from pydantic import ConfigDict
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
 class CreateUser(BaseModel):
@@ -18,3 +20,10 @@ class ResetPasswordRequest(BaseModel):
         if self.new_password != self.confirm_password:
             raise ValueError("Passwords do not match.")
         return self
+class UserRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    email: EmailStr
+    is_verified: bool
