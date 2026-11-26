@@ -1,5 +1,6 @@
+from datetime import datetime, timezone
 from pydantic import EmailStr
-from sqlmodel import Relationship, SQLModel, Field
+from sqlmodel import DateTime, Relationship, SQLModel, Field
 import uuid
 from typing import List
 
@@ -12,7 +13,6 @@ class User(SQLModel, table=True):
     email : EmailStr = Field(unique=True)
     password_hash : str
     is_verified : bool = Field(default=False)
-
     resumes : List["Resume"] = Relationship(back_populates="user")
 
 
@@ -23,9 +23,9 @@ class Resume(SQLModel, table=True):
     target_job : str
     text: str
     user_id : uuid.UUID = Field(foreign_key="user.id")
-
+    filename : str
+    created_at : datetime = Field(default_factory=lambda: datetime.now(timezone.utc), sa_type=DateTime(timezone=True))
     user : User = Relationship(back_populates="resumes")
-
     reviews: List["Review"] = Relationship(back_populates="resume")
 
 
@@ -38,6 +38,5 @@ class Review(SQLModel, table=True):
     weaknesses : str
     missing_skills : str
     suggestions : str
-
     resume_id : uuid.UUID = Field(foreign_key="resume.id")
     resume: Resume = Relationship(back_populates="reviews")
