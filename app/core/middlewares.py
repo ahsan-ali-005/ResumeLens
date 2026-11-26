@@ -14,7 +14,7 @@ class RequestTimeMiddleware(BaseHTTPMiddleware):
         time_taken = round(time.perf_counter() - start, 4)
         now = datetime.now()
 
-        create_log(
+        await create_log(
             date=now.date(),
             time=now.strftime("%H:%M:%S"),
             method=request.method,

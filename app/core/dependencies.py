@@ -1,3 +1,4 @@
+import asyncio
 from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -10,11 +11,13 @@ from app.models.models import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-
-def create_log(date, time, method, endpoint, status, time_taken):
-
+def _write_log(line: str):
     with open("file.log", "a") as f:
-        f.write(f"{date} {time} | {method} | {endpoint} | {status} | {time_taken}\n")
+        f.write(line)
+
+async def create_log(date, time, method, endpoint, status, time_taken):
+    line = f"{date} {time} | {method} | {endpoint} | {status} | {time_taken}\n"
+    await asyncio.to_thread(_write_log, line)
 
 
 async def get_current_user(

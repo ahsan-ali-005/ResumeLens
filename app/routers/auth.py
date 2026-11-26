@@ -1,14 +1,17 @@
 from fastapi import Depends, FastAPI, APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
 from app.core.database import SessionDP
-from app.schemas.schemas import CreateUser, ForgotPasswordRequest, ResetPasswordRequest
-from app.core.dependencies import oauth2_scheme
+from app.schemas.schemas import CreateUser, ForgotPasswordRequest, ResetPasswordRequest, UserRead
+from app.core.dependencies import CurrentUser, oauth2_scheme
 from app.services.auth import forgot_password_service, login_user_service, logout_user_service, register_user_service, verify_email_service, password_reset_service
 
 
 
 router = APIRouter(prefix="/auth" , tags=["Authentication"])
 
+@router.get("/me", response_model=UserRead)
+async def read_me(current_user: CurrentUser):
+    return current_user
 
 @router.post("/register")
 async def register_user(data: CreateUser, session: SessionDP):
