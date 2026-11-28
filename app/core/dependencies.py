@@ -6,7 +6,8 @@ from app.services.user import get_user_by_email
 from app.core.database import SessionDP
 from app.core.security import verify_token
 from app.models.models import User
-
+from io import BytesIO
+from pypdf import PdfReader
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -45,5 +46,20 @@ async def get_current_user(
 
     return user
 
-
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def extract_pdf_text(pdf_bytes: bytes) -> str:
+
+    pdf_file = BytesIO(pdf_bytes)
+    reader = PdfReader(pdf_file)
+    extracted_text = []
+
+    for page in reader.pages:
+        text = page.extract_text() or ""
+        extracted_text.append(text)
+
+    full_text = "\n".join(extracted_text)
+    full_text = full_text.replace("\x00", "")
+
+    return full_text.strip()
